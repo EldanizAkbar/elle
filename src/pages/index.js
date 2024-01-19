@@ -1,118 +1,379 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import React, { useState, useEffect } from "react";
+import Header from "@/components/header";
+import {
+  getPosts,
+  post,
+  getProfileInfo,
+  likePost,
+  comment,
+  getComments,
+} from "./lib/firebase";
+import Link from "next/link";
+import Head from "next/head";
 
-const inter = Inter({ subsets: ['latin'] })
+const Home = ({ initialPosts }) => {
+  const [posts, setPosts] = useState(initialPosts || []);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [likedPosts, setLikedPosts] = useState([]);
+  const [currentUserID, setCurrentUserID] = useState("");
+  const [commentingPostIndex, setCommentingPostIndex] = useState(null);
+  const [commentText, setCommentText] = useState("");
 
-export default function Home() {
+  useEffect(() => {
+    setCurrentUserID(localStorage.getItem("user"));
+  }, []);
+
+  const formatPostDate = (postDate) => {
+    const currentDate = new Date();
+    const postDateObj = new Date(postDate);
+
+    const timeDiff = currentDate - postDateObj;
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return postDateObj.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+      });
+    } else if (days === 1) {
+      return `Yesterday at ${postDateObj.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+      })}`;
+    } else if (days < 365) {
+      return postDateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } else {
+      return postDateObj.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
+  };
+
+  const formatCommentDate = (commentDate) => {
+    const currentDate = new Date();
+    const commentDateObj = new Date(commentDate);
+
+    const timeDiff = currentDate - commentDateObj;
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return commentDateObj.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+      });
+    } else if (days === 1) {
+      return `Yesterday at ${commentDateObj.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+      })}`;
+    } else if (days < 365) {
+      return commentDateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } else {
+      return commentDateObj.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
+  };
+
+  const handlePost = async () => {
+    const currentUserID = localStorage.getItem("user");
+
+    if (!currentUserID) {
+      return;
+    }
+
+    const name = await getProfileInfo(currentUserID);
+
+    if (newPostContent.trim() !== "") {
+      const currentDate = new Date().toString();
+      const newPost = {
+        content: newPostContent,
+        date: currentDate,
+        author: currentUserID,
+        likes: [],
+        authorName: name.fullName,
+      };
+
+      // Update the state with the new post
+      setPosts((prevPosts) => {
+        if (!Array.isArray(prevPosts)) {
+          return [newPost];
+        }
+        return [newPost, ...prevPosts];
+      });
+
+      await post(newPost);
+      setNewPostContent("");
+    }
+  };
+
+  const handleLike = async (index) => {
+    const currentUserID = localStorage.getItem("user");
+    const updatedPosts = [...posts];
+    const postId = updatedPosts[index].key;
+
+    // Check if the 'likes' field exists and is an array
+    const likesArray = Array.isArray(updatedPosts[index].likes)
+      ? updatedPosts[index].likes
+      : [];
+
+    // Check if the user already liked the post
+    const userLiked = likesArray.includes(currentUserID);
+
+    console.log(currentUserID);
+
+    // Update like count and liked status in the database
+    await likePost(
+      postId,
+      userLiked
+        ? likesArray.filter((id) => id !== currentUserID)
+        : [...likesArray, currentUserID]
+    );
+
+    // Update the state with the new like status
+    updatedPosts[index].likes = userLiked
+      ? likesArray.filter((id) => id !== currentUserID)
+      : [...likesArray, currentUserID];
+
+    setPosts(updatedPosts);
+
+    if (userLiked) {
+      setLikedPosts((prevLikedPosts) =>
+        prevLikedPosts.filter((date) => date !== postId)
+      );
+    } else {
+      setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]);
+    }
+  };
+
+  const handleComment = async (index) => {
+    setCommentingPostIndex(index);
+    const postId = posts[index].key;
+
+    const updatedComments = await getComments(postId);
+    const updatedPostsWithComments = posts.map((p, i) =>
+      i === index ? { ...p, comments: updatedComments } : p
+    );
+    setPosts(updatedPostsWithComments);
+  };
+
+  const handleSendComment = async (postIndex) => {
+    const currentUserID = localStorage.getItem("user");
+    const postId = posts[postIndex].key;
+
+    const ad = await getProfileInfo(currentUserID).fullName;
+
+    await comment({
+      content: commentText,
+      date: new Date().toString(),
+      postid: postId,
+      author: currentUserID,
+    });
+
+    // Reload the posts to update comments
+    const updatedPosts = await getPosts();
+    setPosts(updatedPosts);
+
+    const updatedComments = await getComments(postId);
+    const updatedPostsWithComments = posts.map((p, i) =>
+      i === postIndex ? { ...p, comments: updatedComments } : p
+    );
+
+    setPosts(updatedPostsWithComments);
+    setCommentText("");
+  };
+
+  const handleCloseComment = () => {
+    setCommentText("");
+    setCommentingPostIndex(null);
+  };
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <>
+      <Head>
+        <title>Elle</title>
+      </Head>
+      <Header />
+      <div className="container mx-auto p-4 home_container mt-10">
+        <p className="text-center ml-2 font-bold name mx-auto">Ello</p>
+        {currentUserID ? (
+          <>
+            <div className="mb-4 mt-8">
+              <div className="flex">
+                <img
+                  src="https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"
+                  alt="User Avatar"
+                  className="w-8 h-8 rounded-full mr-2"
+                />
+
+                <div className="w-full">
+                  <textarea
+                    placeholder="What's on your mind?"
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    className="w-full h-20 border p-2 rounded"
+                  />
+
+                  <button
+                    onClick={handlePost}
+                    className="text-white font-bold py-2 px-4 rounded post_button mt-2"
+                  >
+                    Post
+                  </button>
+                </div>
+              </div>
+            </div>
+            {posts.length > 0 ? (
+              posts.map((post, index) => (
+                <div
+                  key={`post_${index}`}
+                  className="mb-5 p-4 rounded post_container"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center mb-2">
+                      <Link href={`/${post.author}`}>
+                        <img
+                          src="https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"
+                          alt="User Avatar"
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                      </Link>
+                      <Link href={`/${post.author}`}>
+                        <p className="text-blue-500 cursor-pointer font-bold  hover:underline  duration-150 ease-in-out ">
+                          {post.authorName}
+                        </p>
+                      </Link>
+                    </div>
+                    <p className="text-gray-500 mb-2 font-bold">
+                      <i>{formatPostDate(post.date)}</i>
+                    </p>
+                  </div>
+                  <p>{post.content}</p>
+                  <div className="flex items-center mt-2">
+                    <button onClick={() => handleLike(index)} className="mr-2">
+                      <img
+                        src={
+                          Array.isArray(post.likes) &&
+                          post.likes.includes(currentUserID)
+                            ? "https://pngimg.com/uploads/like/like_PNG60.png"
+                            : "https://webstockreview.net/images/facebook-clipart-glyph-2.png"
+                        }
+                        alt="Like"
+                        width={20}
+                        height={20}
+                      />
+                    </button>
+                    <p className="mr-2">
+                      {Array.isArray(post.likes) ? post.likes.length : 0}
+                    </p>
+                    <button
+                      onClick={() => handleComment(index)}
+                      className="text-blue-500 cursor-pointer"
+                    >
+                      <img
+                        src="https://th.bing.com/th/id/R.a74221b93e775f16a58bf057e9bb90e8?rik=BESsAC7rg9DELA&riu=http%3a%2f%2fcdn.onlinewebfonts.com%2fsvg%2fimg_252622.png&ehk=Db70q9oNagVhpQGmyRdkjFKNMcNuW077dD98aRJUjQ4%3d&risl=&pid=ImgRaw&r=0"
+                        width={20}
+                        height={20}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Comment area */}
+                  {commentingPostIndex === index && (
+                    <div className="mt-4">
+                      <textarea
+                        placeholder="Write a comment..."
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        className="w-full h-12 border p-2 rounded"
+                      />
+                      <div className="flex mt-2">
+                        <button
+                          onClick={() => handleSendComment(index)}
+                          className="text-white font-bold py-2 px-4 rounded mr-2 send_button"
+                        >
+                          Send
+                        </button>
+                        <button
+                          onClick={handleCloseComment}
+                          className="text-gray-800 font-bold py-2 px-4 rounded close_button"
+                        >
+                          Close
+                        </button>
+                      </div>
+
+                      {/* Render comments */}
+                      {post.comments &&
+                        post.comments.map((comment, commentIndex) => (
+                          <div
+                            key={`comment_${commentIndex}`}
+                            className="mt-8 p-2 comment_container"
+                          >
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <Link href={`/${comment.author}`}>
+                                  <img
+                                    src="https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"
+                                    alt="User Avatar"
+                                    className="w-6 h-6 rounded-full mr-2"
+                                  />
+                                </Link>
+                                <p className="text-blue-500 cursor-pointer">
+                                  {comment.authorName}
+                                </p>
+                              </div>
+                              <p className="text-gray-500 font-bold">
+                                <i>{formatCommentDate(comment.date)}</i>
+                              </p>
+                            </div>
+
+                            <p>{comment.content}</p>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p>No posts yet. Start by creating a post!</p>
+            )}
+          </>
+        ) : (
+          <p className="text-center info mt-10">
+            Please login or create an account to view and post content.
+          </p>
+        )}
       </div>
+    </>
+  );
+};
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+export const getServerSideProps = async () => {
+  try {
+    const initialPosts = await getPosts();
+    return {
+      props: {
+        initialPosts,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching initial posts:", error.message);
+    return {
+      props: {
+        initialPosts: [],
+      },
+    };
+  }
+};
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
-}
+export default Home;
