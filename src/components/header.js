@@ -50,7 +50,7 @@ const Header = () => {
                   width={50}
                   height={50}
                 />
-                <span className="text-white ml-1 font-bold name">Ello</span>
+                <span className="text-white ml-1 font-bold name">Elle</span>
               </div>
             </Link>
           </div>

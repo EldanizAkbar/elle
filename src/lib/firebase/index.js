@@ -78,9 +78,8 @@ export async function login({ email, password }) {
 export async function getProfileInfo(userId) {
   const snapshot = await get(ref(db, "/users/" + userId));
   const userData = snapshot.val();
-  return { userId, ...userData }; 
+  return { userId, ...userData };
 }
-
 
 export async function searchUsers(query) {
   const usersRef = ref(db, "/users");
@@ -255,4 +254,9 @@ export async function getComments(postId, limit = -1) {
   }
 
   return comments;
+}
+
+export async function getPostsByUser(userId) {
+  const allPosts = await getPosts();
+  return allPosts.filter((post) => post.author === userId);
 }

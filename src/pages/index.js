@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "@/components/header";
+import { useRouter } from "next/router";
 import {
   getPosts,
   post,
@@ -13,6 +14,7 @@ import Head from "next/head";
 import Image from "next/image";
 
 const Home = ({ initialPosts }) => {
+  const router = useRouter();
   const [posts, setPosts] = useState(initialPosts || []);
   const [newPostContent, setNewPostContent] = useState("");
   const [likedPosts, setLikedPosts] = useState([]);
@@ -105,15 +107,9 @@ const Home = ({ initialPosts }) => {
         authorName: name.fullName,
       };
 
-      // Update the state with the new post
-      setPosts((prevPosts) => {
-        if (!Array.isArray(prevPosts)) {
-          return [newPost];
-        }
-        return [newPost, ...prevPosts];
-      });
-
       await post(newPost);
+      const updatedPosts = await getPosts();
+      setPosts(updatedPosts);
       setNewPostContent("");
     }
   };
@@ -172,8 +168,7 @@ const Home = ({ initialPosts }) => {
   const handleSendComment = async (postIndex) => {
     const currentUserID = localStorage.getItem("user");
     const postId = posts[postIndex].key;
-
-    const ad = await getProfileInfo(currentUserID).fullName;
+    console.log(postId);
 
     await comment({
       content: commentText,
@@ -207,7 +202,7 @@ const Home = ({ initialPosts }) => {
       </Head>
       <Header />
       <div className="container mx-auto p-4 home_container mt-10">
-        <p className="text-center ml-2 font-bold name mx-auto">Ello</p>
+        <p className="text-center ml-2 font-bold name mx-auto">Elle</p>
         {currentUserID ? (
           <>
             <div className="mb-4 mt-8">
@@ -264,7 +259,10 @@ const Home = ({ initialPosts }) => {
                       <i>{formatPostDate(post.date)}</i>
                     </p>
                   </div>
-                  <p>{post.content}</p>
+                  <div className="flex wrap">
+                    <p className="ps-10 break-words w-full">{post.content}</p>
+                  </div>
+
                   <div className="flex items-center mt-2">
                     <button onClick={() => handleLike(index)} className="mr-1">
                       <Image
@@ -328,7 +326,6 @@ const Home = ({ initialPosts }) => {
                         </button>
                       </div>
 
-                      {/* Render comments */}
                       <div className="comment_area">
                         {post.comments &&
                           post.comments.map((comment, commentIndex) => (
@@ -338,7 +335,10 @@ const Home = ({ initialPosts }) => {
                             >
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center">
-                                  <Link href={`/${comment.author}`}>
+                                  <Link
+                                    href={`/${comment.author}`}
+                                    className="flex"
+                                  >
                                     <Image
                                       src="/profile-picture.png"
                                       alt="User Avatar"
@@ -346,17 +346,21 @@ const Home = ({ initialPosts }) => {
                                       width={50}
                                       height={50}
                                     />
+
+                                    <p className="text-blue-500 cursor-pointer">
+                                      {comment.authorName}
+                                    </p>
                                   </Link>
-                                  <p className="text-blue-500 cursor-pointer">
-                                    {comment.authorName}
-                                  </p>
                                 </div>
                                 <p className="text-gray-500 font-bold">
                                   <i>{formatCommentDate(comment.date)}</i>
                                 </p>
                               </div>
-
-                              <p>{comment.content}</p>
+                              <div className="flex items-center wrap">
+                                <p className="ps-8 w-full break-words">
+                                  {comment.content}
+                                </p>
+                              </div>
                             </div>
                           ))}
                       </div>
@@ -365,7 +369,9 @@ const Home = ({ initialPosts }) => {
                 </div>
               ))
             ) : (
-              <p>No posts yet. Start by creating a post!</p>
+              <p className="mt-10 text-center font-bold text-grey mb-10 text-xl">
+                <i>No posts yet. Start by creating a post!</i>
+              </p>
             )}
           </>
         ) : (
