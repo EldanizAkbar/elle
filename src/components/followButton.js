@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { follow, unfollow, getFollowStatus } from "../lib/firebase/index";
+import { useRouter } from "next/router";
 
 const FollowButton = ({ currentUserId, targetUserId, updateCounts }) => {
   const [isFollowing, setIsFollowing] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchFollowStatus = async () => {
@@ -28,6 +30,8 @@ const FollowButton = ({ currentUserId, targetUserId, updateCounts }) => {
       setIsFollowing((prevIsFollowing) => !prevIsFollowing);
       // Update counts after follow/unfollow action
       updateCounts(isFollowing ? -1 : 1);
+
+      router.replace(router.asPath);
     } catch (error) {
       console.error("Error toggling follow status:", error.message);
     }

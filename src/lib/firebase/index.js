@@ -77,8 +77,10 @@ export async function login({ email, password }) {
 
 export async function getProfileInfo(userId) {
   const snapshot = await get(ref(db, "/users/" + userId));
-  return snapshot.val();
+  const userData = snapshot.val();
+  return { userId, ...userData }; 
 }
+
 
 export async function searchUsers(query) {
   const usersRef = ref(db, "/users");

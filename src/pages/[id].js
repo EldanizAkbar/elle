@@ -5,10 +5,11 @@ import FollowButton from "@/components/followButton";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 
-const defaultProfilePicture = "/profile-picture.png"; // Replace with your default image URL
+const defaultProfilePicture = "/profile-picture.png"; 
 
-const UserProfile = ({ id, user }) => {
+const UserProfile = ({ id, user}) => {
   const router = useRouter();
   let currentUserId = localStorage.getItem("user");
 
@@ -19,18 +20,100 @@ const UserProfile = ({ id, user }) => {
   const [followingsCount, setFollowingsCount] = useState(
     user?.followings?.length || 0
   );
+  const [followerNames, setFollowerNames] = useState([]);
+  const [followingNames, setFollowingNames] = useState([]);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowings, setShowFollowings] = useState(false);
 
   useEffect(() => {
     setIsCurrentUser(id === currentUserId);
-  }, [id, user, currentUserId]); // Include 'id' in the dependency array
+  }, [id, user, currentUserId]);
+
+  useEffect(() => {
+    setFollowersCount(user?.followers?.length || 0);
+    setFollowingsCount(user?.followings?.length || 0);
+    setShowFollowers(false);
+    setShowFollowings(false);
+  }, [user]);
+
 
   const updateCounts = (change) => {
     setFollowersCount((prevCount) => prevCount + change);
+
+    const fetchFollowersInfo = async () => {
+      try {
+        const followersPromises = user.followers.map(async (follower) => {
+          const followerInfo = await getProfileInfo(follower);
+          return followerInfo;
+        });
+
+        const followersNames = await Promise.all(followersPromises);
+        setFollowerNames(followersNames);
+      } catch (error) {
+        console.error("Error fetching followers info:", error.message);
+      }
+    };
+
+      fetchFollowersInfo();    
   };
 
+
   const handleBackButtonClick = () => {
-    router.back(); // Go back to the previous page
+    router.back();
   };
+
+  useEffect(() => {
+    const fetchFollowersInfo = async () => {
+      try {
+        const followersPromises = user.followers.map(async (follower) => {
+          const followerInfo = await getProfileInfo(follower);
+          return followerInfo;
+        });
+
+        const followersNames = await Promise.all(followersPromises);
+        setFollowerNames(followersNames);
+      } catch (error) {
+        console.error("Error fetching followers info:", error.message);
+      }
+    };
+
+      fetchFollowersInfo();
+
+  }, [user, showFollowers, followersCount]);
+
+  useEffect(() => {
+    const fetchFollowingsInfo = async () => {
+      try {
+        const followingsPromises = user.followings.map(async (following) => {
+          const followingInfo = await getProfileInfo(following);
+          return followingInfo;
+        });
+
+        const followingsNames = await Promise.all(followingsPromises);
+        setFollowingNames(followingsNames);
+      } catch (error) {
+        console.error("Error fetching followings info:", error.message);
+      }
+    };
+
+      fetchFollowingsInfo();
+
+  }, [user, showFollowings, followingsCount]);
+
+  const handleShowFollowers = () => {
+    setShowFollowers(!showFollowers);
+    setShowFollowings(false);
+  };
+
+  const handleShowFollowing = () => {
+    setShowFollowers(false);
+    setShowFollowings(!showFollowings);
+  };
+
+  const handleclose = () => {
+    setShowFollowers(false);
+    setShowFollowings(false);
+  }
 
   return (
     <>
@@ -50,7 +133,7 @@ const UserProfile = ({ id, user }) => {
 
         <div className="text-center">
           <Image
-            src={user.profilePicture || defaultProfilePicture}
+            src={user?.profilePicture || defaultProfilePicture}
             alt={`${user.fullName}'s Profile`}
             className="w-24 h-24 rounded-full mx-auto mb-4"
             width={100}
@@ -75,17 +158,105 @@ const UserProfile = ({ id, user }) => {
 
         <div className="mt-8">
           <div className="flex justify-around stats_container mx-auto">
-            <div className="text-center">
-              <p className="font-bold">{followersCount}</p>
-              <p className="text-gray-600">Followers</p>
+            <div className="text-center"  onClick={handleShowFollowers}>
+              <p className="font-bold">
+                {followersCount}
+              </p>
+              <p
+                className={`text-gray-600 hover:underline cursor-pointer ${
+                  showFollowers && "font-bold"
+                }`}
+              >
+                Followers
+              </p>
             </div>
-            <div className="text-center">
-              <p className="font-bold">{followingsCount}</p>
-              <p className="text-gray-600">Following</p>
+            <div className="text-center"  onClick={handleShowFollowing}>
+              <p className="font-bold">
+                {followingsCount}
+              </p>
+              <p
+                className={`text-gray-600 hover:underline cursor-pointer ${
+                  showFollowings && "font-bold"
+                }`}
+              >
+                Following
+              </p>
             </div>
           </div>
-        </div>
 
+          {showFollowers && (
+            <div className="mt-4 mx-auto">
+              <p className="text-gray-700 text-center text-xl mt-10">
+                <strong>Followers:</strong>
+              </p>
+              {followersCount> 0 ? (
+                <ul className="mt-6 users_container mx-auto">
+                  {followerNames.map((follower) => (
+                    <li key={follower.id} className="mb-4 p-4 bg-gray-100 rounded">
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={follower.profileImage || defaultProfilePicture}
+                          alt={`${follower.fullName}'s Profile Image`}
+                          className="w-16 h-16 rounded-full object-cover"
+                          width={50}
+                          height={50}
+                        />
+                        <div className="flex flex-col gap-2">
+                          <p className="text-lg font-bold">{follower.fullName}</p>
+                          <Link
+                            href={`/${follower.userId}`}
+                            className="text-blue-500 view_profile_btn"
+                            onClick={handleclose}
+                          >
+                            View Profile
+                          </Link>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500 mt-6 text-center text-lg font-bold"><i>Not followed by anyone.</i></p>
+              )}
+            </div>
+          )}
+
+          {showFollowings && (
+            <div className="mt-4 mx-auto">
+              <p className="text-gray-700 text-center text-xl mt-10">
+                <strong>Followings:</strong>
+              </p>
+              {followingsCount > 0 ? (
+                <ul className="mt-6 users_container mx-auto">
+                  {followingNames.map((following) => (
+                    <li key={following.id} className="mb-4 p-4 bg-gray-100 rounded">
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={following.profileImage || defaultProfilePicture}
+                          alt={`${following.fullName}'s Profile Image`}
+                          className="w-16 h-16 rounded-full object-cover"
+                          width={50}
+                          height={50}
+                        />
+                        <div className="flex flex-col gap-2">
+                          <p className="text-lg font-bold">{following.fullName}</p>
+                          <Link
+                            href={`/${following.userId}`}
+                            className="text-blue-500 view_profile_btn"
+                          >
+                            View Profile
+                          </Link>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500 mt-6 text-center text-lg font-bold"><i>Not following anyone.</i></p>
+              )}
+            </div>
+          )}
+        </div>
         <div className="mx-auto text-center mt-10">
           {!isCurrentUser && (
             <FollowButton

@@ -158,7 +158,8 @@ const Home = ({ initialPosts }) => {
   };
 
   const handleComment = async (index) => {
-    setCommentingPostIndex(index);
+    setCommentingPostIndex(commentingPostIndex === index ? null : index);
+    setCommentText("");
     const postId = posts[index].key;
 
     const updatedComments = await getComments(postId);
@@ -240,9 +241,9 @@ const Home = ({ initialPosts }) => {
               posts.map((post, index) => (
                 <div
                   key={`post_${index}`}
-                  className="mb-5 p-4 rounded post_container"
+                  className="mb-5 p-2 md:p-4 rounded post_container"
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-3">
                     <div className="flex items-center mb-2">
                       <Link href={`/${post.author}`}>
                         <Image
@@ -259,13 +260,13 @@ const Home = ({ initialPosts }) => {
                         </p>
                       </Link>
                     </div>
-                    <p className="text-gray-500 mb-2 font-bold">
+                    <p className="text-gray-500 mb-2 font-bold text-sm">
                       <i>{formatPostDate(post.date)}</i>
                     </p>
                   </div>
                   <p>{post.content}</p>
                   <div className="flex items-center mt-2">
-                    <button onClick={() => handleLike(index)} className="mr-2">
+                    <button onClick={() => handleLike(index)} className="mr-1">
                       <Image
                         src={
                           Array.isArray(post.likes) &&
@@ -281,17 +282,26 @@ const Home = ({ initialPosts }) => {
                     <p className="mr-2">
                       {Array.isArray(post.likes) ? post.likes.length : 0}
                     </p>
-                    <button
-                      onClick={() => handleComment(index)}
-                      className="text-blue-500 cursor-pointer"
-                    >
-                      <Image
-                        src="/comment.png"
-                        alt="Comment"
-                        width={20}
-                        height={20}
-                      />
-                    </button>
+                    <div className="ms-8 flex items-center">
+                      <button
+                        onClick={() => handleComment(index)}
+                        className="text-blue-500 cursor-pointer"
+                      >
+                        <Image
+                          src="/comment.png"
+                          alt="Comment"
+                          width={20}
+                          height={20}
+                        />
+                      </button>
+                      <span className="ml-1">
+                        {post.comments
+                          ? post.comments.length > 0
+                            ? post.comments.length
+                            : 0
+                          : 0}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Comment area */}
@@ -319,35 +329,37 @@ const Home = ({ initialPosts }) => {
                       </div>
 
                       {/* Render comments */}
-                      {post.comments &&
-                        post.comments.map((comment, commentIndex) => (
-                          <div
-                            key={`comment_${commentIndex}`}
-                            className="mt-8 p-2 comment_container"
-                          >
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center">
-                                <Link href={`/${comment.author}`}>
-                                  <Image
-                                    src="/profile-picture.png"
-                                    alt="User Avatar"
-                                    className="w-6 h-6 rounded-full mr-2"
-                                    width={50}
-                                    height={50}
-                                  />
-                                </Link>
-                                <p className="text-blue-500 cursor-pointer">
-                                  {comment.authorName}
+                      <div className="comment_area">
+                        {post.comments &&
+                          post.comments.map((comment, commentIndex) => (
+                            <div
+                              key={`comment_${commentIndex}`}
+                              className="mt-8 p-2 comment_container"
+                            >
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center">
+                                  <Link href={`/${comment.author}`}>
+                                    <Image
+                                      src="/profile-picture.png"
+                                      alt="User Avatar"
+                                      className="w-6 h-6 rounded-full mr-2"
+                                      width={50}
+                                      height={50}
+                                    />
+                                  </Link>
+                                  <p className="text-blue-500 cursor-pointer">
+                                    {comment.authorName}
+                                  </p>
+                                </div>
+                                <p className="text-gray-500 font-bold">
+                                  <i>{formatCommentDate(comment.date)}</i>
                                 </p>
                               </div>
-                              <p className="text-gray-500 font-bold">
-                                <i>{formatCommentDate(comment.date)}</i>
-                              </p>
-                            </div>
 
-                            <p>{comment.content}</p>
-                          </div>
-                        ))}
+                              <p>{comment.content}</p>
+                            </div>
+                          ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -357,9 +369,25 @@ const Home = ({ initialPosts }) => {
             )}
           </>
         ) : (
-          <p className="text-center info mt-10">
-            Please login or create an account to view and post content.
-          </p>
+          <>
+            <p className="text-center info mt-10">
+              Please login or create an account to view and post content.
+            </p>
+            <div className="mx-auto text-center mt-10 flex gap-5 justify-center">
+              <Link
+                href="/login"
+                className={`text-white hover:text-gray-300 transition duration-300 login`}
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className={`text-white hover:text-gray-300 transition duration-300 register`}
+              >
+                Register
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </>

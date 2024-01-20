@@ -50,7 +50,7 @@ const Header = () => {
                   width={50}
                   height={50}
                 />
-                <span className="text-white ml-2 font-bold name">Ello</span>
+                <span className="text-white ml-1 font-bold name">Ello</span>
               </div>
             </Link>
           </div>
@@ -86,7 +86,7 @@ const Header = () => {
 
                 <Link
                   href="/profile"
-                  className={`text-white hover:text-gray-300 transition duration-300 profile ${
+                  className={`text-white transition duration-300 profile ${
                     router.pathname === "/profile" ? "profileBg" : ""
                   }`}
                 >
@@ -164,7 +164,7 @@ const Header = () => {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block text-white mt-5 logOutBtn w-40 mx-auto "
+                    className="block text-white mt-5 logOutBtn w-40 mx-auto"
                   >
                     Logout
                   </button>
