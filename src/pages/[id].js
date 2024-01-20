@@ -6,8 +6,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import Image from "next/image";
 
-const defaultProfilePicture =
-  "/profile-picture.png"; // Replace with your default image URL
+const defaultProfilePicture = "/profile-picture.png"; // Replace with your default image URL
 
 const UserProfile = ({ id, user }) => {
   const router = useRouter();
@@ -23,7 +22,7 @@ const UserProfile = ({ id, user }) => {
 
   useEffect(() => {
     setIsCurrentUser(id === currentUserId);
-  }, [user, currentUserId]);
+  }, [id, user, currentUserId]); // Include 'id' in the dependency array
 
   const updateCounts = (change) => {
     setFollowersCount((prevCount) => prevCount + change);
@@ -35,9 +34,9 @@ const UserProfile = ({ id, user }) => {
 
   return (
     <>
-            <Head>
+      <Head>
         <title>User Profile</title>
-        </Head>
+      </Head>
       <Header />
       <div className="container mx-auto mt-8 p-8 bg-white rounded-lg shadow-lg profile_container">
         <div className="flex justify-start mb-4">

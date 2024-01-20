@@ -10,6 +10,7 @@ import {
 } from "./lib/firebase";
 import Link from "next/link";
 import Head from "next/head";
+import Image from "next/image";
 
 const Home = ({ initialPosts }) => {
   const [posts, setPosts] = useState(initialPosts || []);
@@ -210,10 +211,12 @@ const Home = ({ initialPosts }) => {
           <>
             <div className="mb-4 mt-8">
               <div className="flex">
-                <img
-                  src="https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"
+                <Image
+                  src="/profile-picture.png"
                   alt="User Avatar"
                   className="w-8 h-8 rounded-full mr-2"
+                  width={50}
+                  height={50}
                 />
 
                 <div className="w-full">
@@ -242,10 +245,12 @@ const Home = ({ initialPosts }) => {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center mb-2">
                       <Link href={`/${post.author}`}>
-                        <img
-                          src="https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"
+                        <Image
+                          src="/profile-picture.png"
                           alt="User Avatar"
                           className="w-8 h-8 rounded-full mr-2"
+                          width={50}
+                          height={50}
                         />
                       </Link>
                       <Link href={`/${post.author}`}>
@@ -261,12 +266,12 @@ const Home = ({ initialPosts }) => {
                   <p>{post.content}</p>
                   <div className="flex items-center mt-2">
                     <button onClick={() => handleLike(index)} className="mr-2">
-                      <img
+                      <Image
                         src={
                           Array.isArray(post.likes) &&
                           post.likes.includes(currentUserID)
-                            ? "https://pngimg.com/uploads/like/like_PNG60.png"
-                            : "https://webstockreview.net/images/facebook-clipart-glyph-2.png"
+                            ? "/like.png"
+                            : "/dislike.png"
                         }
                         alt="Like"
                         width={20}
@@ -280,8 +285,8 @@ const Home = ({ initialPosts }) => {
                       onClick={() => handleComment(index)}
                       className="text-blue-500 cursor-pointer"
                     >
-                      <img
-                        src="https://th.bing.com/th/id/R.a74221b93e775f16a58bf057e9bb90e8?rik=BESsAC7rg9DELA&riu=http%3a%2f%2fcdn.onlinewebfonts.com%2fsvg%2fimg_252622.png&ehk=Db70q9oNagVhpQGmyRdkjFKNMcNuW077dD98aRJUjQ4%3d&risl=&pid=ImgRaw&r=0"
+                      <Image
+                        src="/comment.png"
                         width={20}
                         height={20}
                       />
@@ -322,10 +327,12 @@ const Home = ({ initialPosts }) => {
                             <div className="flex justify-between items-center">
                               <div className="flex items-center">
                                 <Link href={`/${comment.author}`}>
-                                  <img
-                                    src="https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"
+                                  <Image
+                                    src="/profile-picture.png"
                                     alt="User Avatar"
                                     className="w-6 h-6 rounded-full mr-2"
+                                    width={50}
+                                    height={50}
                                   />
                                 </Link>
                                 <p className="text-blue-500 cursor-pointer">
