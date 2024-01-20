@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { getProfileInfo } from "./lib/firebase"; // Adjust the path based on your project structure
 import Header from "@/components/header";
 import Head from "next/head";
+import Image from "next/image";
 
 const defaultProfilePicture =
-  "https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png";
+  "/profile-picture.png"; 
 
 const Profile = () => {
   const [profileInfo, setProfileInfo] = useState(null);
@@ -47,10 +48,12 @@ const Profile = () => {
       <Header />
       <div className="container mx-auto mt-8 p-8 bg-white rounded-lg shadow-lg profile_container">
         <div className="text-center">
-          <img
+          <Image
             src={profileInfo.profilePicture || defaultProfilePicture}
             alt="Profile"
             className="w-24 h-24 rounded-full mx-auto mb-4"
+            width={100}
+            height={100}
           />
           <h1 className="text-2xl font-bold">{profileInfo.fullName}</h1>
         </div>

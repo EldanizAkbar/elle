@@ -43,10 +43,12 @@ const Header = () => {
           <div className="flex-shrink-0">
           <Link href="/">
               <div className="flex items-center cursor-pointer">
-                <img
+                <Image
                   className="h-8 w-auto logo"
-                  src="https://img.icons8.com/?size=256&id=13979&format=png"
+                  src="/logo.png"
                   alt="Logo"
+                  width={50}
+                  height={50}
                 />
                 <span className="text-white ml-2 font-bold name">Ello</span>
               </div>

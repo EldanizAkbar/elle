@@ -4,9 +4,10 @@ import Header from "@/components/header";
 import FollowButton from "@/components/followButton";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Image from "next/image";
 
 const defaultProfilePicture =
-  "https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png"; // Replace with your default image URL
+  "/profile-picture.png"; // Replace with your default image URL
 
 const UserProfile = ({ id, user }) => {
   const router = useRouter();
@@ -49,10 +50,12 @@ const UserProfile = ({ id, user }) => {
         </div>
 
         <div className="text-center">
-          <img
+          <Image
             src={user.profilePicture || defaultProfilePicture}
             alt={`${user.fullName}'s Profile`}
             className="w-24 h-24 rounded-full mx-auto mb-4"
+            width={100}
+            height={100}
           />
           <h1 className="text-2xl font-bold">{user.fullName}</h1>
         </div>

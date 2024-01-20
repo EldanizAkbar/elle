@@ -3,6 +3,7 @@ import Header from "../components/header";
 import { searchUsers, getProfileInfo } from "./lib/firebase/index";
 import Link from "next/link";
 import Head from "next/head";
+import Image from "next/image";
 
 const Search = () => {
   const [query, setQuery] = useState("");
@@ -39,7 +40,7 @@ const Search = () => {
   };
 
   const defaultUserImage =
-    "https://toppng.com/public/uploads/preview/instagram-default-profile-picture-11562973083brycehrmyv.png";
+    "/profile-picture.png";
 
   return (
     <>
@@ -86,10 +87,12 @@ const Search = () => {
             {searchResults.map((user) => (
               <li key={user.id} className="mb-4 p-4 bg-gray-100 rounded">
                 <div className="flex items-center gap-3">
-                  <img
+                  <Image
                     src={user.profileImage || defaultUserImage}
                     alt={`${user.fullName}'s Profile Image`}
                     className="w-16 h-16 rounded-full object-cover"
+                    width={50}
+                    height={50}
                   />
                   <div className="flex flex-col gap-2">
                     <p className="text-lg font-bold">{user.fullName}</p>
