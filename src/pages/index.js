@@ -287,6 +287,7 @@ const Home = ({ initialPosts }) => {
                     >
                       <Image
                         src="/comment.png"
+                        alt="Comment"
                         width={20}
                         height={20}
                       />
