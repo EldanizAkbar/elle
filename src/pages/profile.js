@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { getProfileInfo } from "./lib/firebase"; // Adjust the path based on your project structure
+import { getProfileInfo } from "../lib/firebase"; // Adjust the path based on your project structure
 import Header from "@/components/header";
 import Head from "next/head";
 import Image from "next/image";
 
-const defaultProfilePicture =
-  "/profile-picture.png"; 
+const defaultProfilePicture = "/profile-picture.png";
 
 const Profile = () => {
   const [profileInfo, setProfileInfo] = useState(null);
@@ -32,8 +31,8 @@ const Profile = () => {
     // Loading state or redirect to a loading indicator
     return (
       <>
-              <Head>
-        <title>My Profile</title>
+        <Head>
+          <title>My Profile</title>
         </Head>
         <Header />
       </>
@@ -42,9 +41,9 @@ const Profile = () => {
 
   return (
     <>
-        <Head>
+      <Head>
         <title>My Profile</title>
-        </Head>
+      </Head>
       <Header />
       <div className="container mx-auto mt-8 p-8 bg-white rounded-lg shadow-lg profile_container">
         <div className="text-center">

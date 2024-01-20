@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getProfileInfo } from "./lib/firebase/index";
+import { getProfileInfo } from "../lib/firebase/index";
 import Header from "@/components/header";
 import FollowButton from "@/components/followButton";
 import { useRouter } from "next/router";

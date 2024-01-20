@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { login } from "./lib/firebase/index";
+import { login } from "../lib/firebase/index";
 import Header from "../components/header";
 import Head from "next/head";
 import Link from "next/link";

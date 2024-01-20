@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { follow, unfollow, getFollowStatus } from "../pages/lib/firebase/index";
+import { follow, unfollow, getFollowStatus } from "../lib/firebase/index";
 
 const FollowButton = ({ currentUserId, targetUserId, updateCounts }) => {
   const [isFollowing, setIsFollowing] = useState(false);

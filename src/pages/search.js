@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "../components/header";
-import { searchUsers, getProfileInfo } from "./lib/firebase/index";
+import { searchUsers, getProfileInfo } from "../lib/firebase/index";
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
@@ -39,14 +39,13 @@ const Search = () => {
     }
   };
 
-  const defaultUserImage =
-    "/profile-picture.png";
+  const defaultUserImage = "/profile-picture.png";
 
   return (
     <>
-    <Head>
-      <title>Search Users</title>
-    </Head>
+      <Head>
+        <title>Search Users</title>
+      </Head>
       <Header />
       <div className="container mx-auto mt-8 p-4 bg-white rounded-lg shadow-lg search_container">
         <h1 className="text-3xl font-bold mb-4">User Search</h1>
