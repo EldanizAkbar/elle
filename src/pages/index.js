@@ -22,6 +22,8 @@ const Home = ({ initialPosts }) => {
   const [postError, setPostError] = useState("");
   const [commentError, setCommentError] = useState("");
   const [infos, setInfos] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [comLoading, setComLoading] = useState(true);
 
   useEffect(() => {
     setCurrentUserID(localStorage.getItem("user"));
@@ -151,6 +153,7 @@ const Home = ({ initialPosts }) => {
   };
 
   const handleComment = async (index) => {
+    setComLoading(true);
     setCommentingPostIndex(commentingPostIndex === index ? null : index);
     setCommentText("");
     const postId = posts[index].key;
@@ -160,9 +163,11 @@ const Home = ({ initialPosts }) => {
       i === index ? { ...p, comments: updatedComments } : p
     );
     setPosts(updatedPostsWithComments);
+    setComLoading(false);
   };
 
   const handleSendComment = async (postIndex) => {
+    setComLoading(true);
     const currentUserID = localStorage.getItem("user");
     const postId = posts[postIndex].key;
 
@@ -196,12 +201,28 @@ const Home = ({ initialPosts }) => {
 
     setPosts(updatedPostsWithComments);
     setCommentText("");
+    setComLoading(false);
   };
 
   const handleCloseComment = () => {
     setCommentText("");
     setCommentingPostIndex(null);
   };
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const initialPosts = await getPosts();
+        setPosts(initialPosts);
+        setLoading(false); 
+      } catch (error) {
+        console.error("Error fetching initial posts:", error.message);
+        setLoading(false); 
+      }
+    }
+
+    fetchData();
+  }, []);
 
   return (
     <>
@@ -246,154 +267,159 @@ const Home = ({ initialPosts }) => {
                 </div>
               </div>
             </div>
-            {posts.length > 0 ? (
-              posts.map((post, index) => (
-                <div
-                  key={`post_${index}`}
-                  className="mb-5 p-2 md:p-4 rounded post_container"
-                >
-                  <div className="flex justify-between items-center gap-3">
-                    <div className="flex items-center mb-2">
-                      <Link href={`/${post.author}`}>
-                        <Image
-                          src={post?.authorImage || "/profile-picture.png"}
-                          alt="User Avatar"
-                          className="w-8 h-8 rounded-full mr-2  object-cover"
-                          width={50}
-                          height={50}
-                        />
-                      </Link>
-                      <Link href={`/${post.author}`}>
-                        <p className="text-blue-500 cursor-pointer font-bold  hover:underline  duration-150 ease-in-out ">
-                          {post.authorName}
-                        </p>
-                      </Link>
+            {loading ? (
+              <div className="text-center mx-auto">
+                <img src="../loading spinner.gif" alt="Loading" className="mx-auto" />
+              </div>
+            ) : (
+              posts.length > 0 ? (
+                posts.map((post, index) => (
+                  <div
+                    key={`post_${index}`}
+                    className="mb-5 p-2 md:p-4 rounded post_container"
+                  >
+                    <div className="flex justify-between items-center gap-3">
+                      <div className="flex items-center mb-2">
+                        <Link href={`/${post.author}`}>
+                          <Image
+                            src={post?.authorImage || "/profile-picture.png"}
+                            alt="User Avatar"
+                            className="w-8 h-8 rounded-full mr-2 object-cover"
+                            width={50}
+                            height={50}
+                          />
+                        </Link>
+                        <Link href={`/${post.author}`}>
+                          <p className="text-blue-500 cursor-pointer font-bold hover:underline duration-150 ease-in-out">
+                            {post.authorName}
+                          </p>
+                        </Link>
+                      </div>
+                      <p className="text-gray-500 mb-2 font-bold text-sm">
+                        <i>{formatDate(post.date)}</i>
+                      </p>
                     </div>
-                    <p className="text-gray-500 mb-2 font-bold text-sm">
-                      <i>{formatDate(post.date)}</i>
-                    </p>
-                  </div>
-                  <div className="flex wrap">
-                    <p className="ps-10 break-words w-full">{post.content}</p>
-                  </div>
+                    <div className="flex wrap">
+                      <p className="ps-10 break-words w-full">{post.content}</p>
+                    </div>
 
-                  <div className="flex items-center mt-2">
-                    <button onClick={() => handleLike(index)} className="mr-1">
-                      <Image
-                        src={
-                          Array.isArray(post.likes) &&
-                          post.likes.includes(currentUserID)
-                            ? "/like.png"
-                            : "/dislike.png"
-                        }
-                        alt="Like"
-                        width={20}
-                        height={20}
-                      />
-                    </button>
-                    <p className="mr-2">
-                      {Array.isArray(post.likes) ? post.likes.length : 0}
-                    </p>
-                    <div className="ms-8 flex items-center">
-                      <button
-                        onClick={() => handleComment(index)}
-                        className="text-blue-500 cursor-pointer"
-                      >
+                    <div className="flex items-center mt-2">
+                      <button onClick={() => handleLike(index)} className="mr-1">
                         <Image
-                          src="/comment.png"
-                          alt="Comment"
+                          src={
+                            Array.isArray(post.likes) &&
+                            post.likes.includes(currentUserID)
+                              ? "/like.png"
+                              : "/dislike.png"
+                          }
+                          alt="Like"
                           width={20}
                           height={20}
                         />
                       </button>
-                      <span className="ml-1">
-                        {post.comments
-                          ? post.comments.length > 0
-                            ? post.comments.length
-                            : 0
-                          : 0}
-                      </span>
+                      <p className="mr-2">
+                        {Array.isArray(post.likes) ? post.likes.length : 0}
+                      </p>
+                      <div className="ms-8 flex items-center">
+                        <button
+                          onClick={() => handleComment(index)}
+                          className="text-blue-500 cursor-pointer"
+                        >
+                          <Image
+                            src="/comment.png"
+                            alt="Comment"
+                            width={20}
+                            height={20}
+                          />
+                        </button>
+                        <span className="ml-1">
+                          {post.comments
+                            ? post.comments.length > 0
+                              ? post.comments.length
+                              : 0
+                            : 0}
+                        </span>
+                      </div>
                     </div>
+
+                    {commentingPostIndex === index && (
+                      <div className="mt-4">
+                        <textarea
+                          placeholder="Write a comment..."
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          className="w-full h-12 border p-2 rounded max-h-60 min-h-10"
+                        />
+                        {commentError && (
+                          <p className="text-red-500 text-red-500 font-bold text-sm">
+                            <i>{commentError}</i>
+                          </p>
+                        )}
+                        <div className="flex mt-2">
+                          <button
+                            onClick={() => handleSendComment(index)}
+                            className="text-white font-bold py-2 px-4 rounded mr-2 send_button"
+                          >
+                            Send
+                          </button>
+                          <button
+                            onClick={handleCloseComment}
+                            className="text-gray-800 font-bold py-2 px-4 rounded close_button"
+                          >
+                            Close
+                          </button>
+                        </div>
+
+                        <div className="comment_area">
+  {post.comments && (
+    comLoading ? (
+      <div className="text-center mx-auto">
+        <img src="../loading spinner.gif" alt="Loading" className="mx-auto" />
+      </div>
+    ) : (
+      post.comments.map((comment) => (
+        <div
+          key={`comment_${comment.commentIndex}`}
+          className="mt-8 p-2 comment_container"
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Link href={`/${comment.author}`} className="flex">
+                <Image
+                  src={comment?.authorImage || "/profile-picture.png"}
+                  alt="User Avatar"
+                  className="w-6 h-6 rounded-full mr-2 object-cover"
+                  width={50}
+                  height={50}
+                />
+
+                <p className="text-blue-500 cursor-pointer">
+                  {comment.authorName}
+                </p>
+              </Link>
+            </div>
+            <p className="text-gray-500 font-bold">
+              <i>{formatDate(comment.date)}</i>
+            </p>
+          </div>
+          <div className="flex items-center wrap">
+            <p className="ps-8 w-full break-words">{comment.content}</p>
+          </div>
+        </div>
+      ))
+    )
+  )}
+</div>
+
+                      </div>
+                    )}
                   </div>
-
-                  {/* Comment area */}
-                  {commentingPostIndex === index && (
-                    <div className="mt-4">
-                      <textarea
-                        placeholder="Write a comment..."
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        className="w-full h-12 border p-2 rounded max-h-60 min-h-10"
-                      />
-                      {commentError && (
-                        <p className="text-red-500 text-red-500 font-bold text-sm">
-                          <i>{commentError}</i>
-                        </p>
-                      )}
-                      <div className="flex mt-2">
-                        <button
-                          onClick={() => handleSendComment(index)}
-                          className="text-white font-bold py-2 px-4 rounded mr-2 send_button"
-                        >
-                          Send
-                        </button>
-                        <button
-                          onClick={handleCloseComment}
-                          className="text-gray-800 font-bold py-2 px-4 rounded close_button"
-                        >
-                          Close
-                        </button>
-                      </div>
-
-                      <div className="comment_area">
-                        {post.comments &&
-                          post.comments.map((comment, commentIndex) => (
-                            <div
-                              key={`comment_${commentIndex}`}
-                              className="mt-8 p-2 comment_container"
-                            >
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center">
-                                  <Link
-                                    href={`/${comment.author}`}
-                                    className="flex"
-                                  >
-                                    <Image
-                                      src={
-                                        comment?.authorImage ||
-                                        "/profile-picture.png"
-                                      }
-                                      alt="User Avatar"
-                                      className="w-6 h-6 rounded-full mr-2 object-cover"
-                                      width={50}
-                                      height={50}
-                                    />
-
-                                    <p className="text-blue-500 cursor-pointer">
-                                      {comment.authorName}
-                                    </p>
-                                  </Link>
-                                </div>
-                                <p className="text-gray-500 font-bold">
-                                  <i>{formatDate(comment.date)}</i>
-                                </p>
-                              </div>
-                              <div className="flex items-center wrap">
-                                <p className="ps-8 w-full break-words">
-                                  {comment.content}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="mt-10 text-center font-bold text-grey mb-10 text-xl">
-                <i>No posts yet. Start by creating a post!</i>
-              </p>
+                ))
+              ) : (
+                <p className="mt-10 text-center font-bold text-grey mb-10 text-xl">
+                  <i>No posts yet. Start by creating a post!</i>
+                </p>
+              )
             )}
           </>
         ) : (
@@ -421,6 +447,7 @@ const Home = ({ initialPosts }) => {
     </>
   );
 };
+
 
 export const getServerSideProps = async () => {
   try {
