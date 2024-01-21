@@ -59,30 +59,6 @@ const UserProfile = ({ id, user }) => {
     setShowFollowings(false);
   }, [user]);
 
-  const updateCounts = (change) => {
-    setFollowersCount((prevCount) => prevCount + change);
-
-    const fetchFollowersInfo = async () => {
-      try {
-        const followersPromises = user.followers.map(async (follower) => {
-          const followerInfo = await getProfileInfo(follower);
-          return followerInfo;
-        });
-
-        const followersNames = await Promise.all(followersPromises);
-        setFollowerNames(followersNames);
-      } catch (error) {
-        console.error("Error fetching followers info:", error.message);
-      }
-    };
-
-    fetchFollowersInfo();
-  };
-
-  const handleBackButtonClick = () => {
-    router.back();
-  };
-
   useEffect(() => {
     const fetchFollowersInfo = async () => {
       try {
@@ -119,6 +95,30 @@ const UserProfile = ({ id, user }) => {
     fetchFollowingsInfo();
   }, [user, showFollowings, followingsCount]);
 
+  const updateCounts = (change) => {
+    setFollowersCount((prevCount) => prevCount + change);
+
+    const fetchFollowersInfo = async () => {
+      try {
+        const followersPromises = user.followers.map(async (follower) => {
+          const followerInfo = await getProfileInfo(follower);
+          return followerInfo;
+        });
+
+        const followersNames = await Promise.all(followersPromises);
+        setFollowerNames(followersNames);
+      } catch (error) {
+        console.error("Error fetching followers info:", error.message);
+      }
+    };
+
+    fetchFollowersInfo();
+  };
+
+  const handleBackButtonClick = () => {
+    router.back();
+  };
+
   const handleShowFollowers = () => {
     setShowFollowers(!showFollowers);
     setShowFollowings(false);
@@ -134,61 +134,38 @@ const UserProfile = ({ id, user }) => {
     setShowFollowings(false);
   };
 
-  const formatPostDate = (postDate) => {
+  const formatDate = (date) => {
     const currentDate = new Date();
-    const postDateObj = new Date(postDate);
+    const dateObj = new Date(date);
 
-    const timeDiff = currentDate - postDateObj;
+    const timeDiff = currentDate - dateObj;
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
     if (days === 0) {
-      return postDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      });
+      const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+      if (hoursDiff < 12) {
+        return dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+        });
+      } else {
+        return `Yesterday at ${dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+        })}`;
+      }
     } else if (days === 1) {
-      return `Yesterday at ${postDateObj.toLocaleTimeString("en-US", {
+      return `Yesterday at ${dateObj.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "numeric",
       })}`;
     } else if (days < 365) {
-      return postDateObj.toLocaleDateString("en-US", {
+      return dateObj.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       });
     } else {
-      return postDateObj.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    }
-  };
-
-  const formatCommentDate = (commentDate) => {
-    const currentDate = new Date();
-    const commentDateObj = new Date(commentDate);
-
-    const timeDiff = currentDate - commentDateObj;
-    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return commentDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      });
-    } else if (days === 1) {
-      return `Yesterday at ${commentDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      })}`;
-    } else if (days < 365) {
-      return commentDateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-    } else {
-      return commentDateObj.toLocaleDateString("en-US", {
+      return dateObj.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -295,7 +272,7 @@ const UserProfile = ({ id, user }) => {
 
         <div className="text-center">
           <Image
-            src={user?.profilePicture || defaultProfilePicture}
+            src={user?.profileImage || defaultProfilePicture}
             alt={`${user.fullName}'s Profile`}
             className="w-24 h-24 rounded-full mx-auto mb-4"
             width={100}
@@ -454,7 +431,7 @@ const UserProfile = ({ id, user }) => {
                   <div className="flex items-center mb-2">
                     <Link href={`/${post.author}`}>
                       <Image
-                        src="/profile-picture.png"
+                        src={post?.authorImage || defaultProfilePicture}
                         alt="User Avatar"
                         className="w-8 h-8 rounded-full mr-2"
                         width={50}
@@ -468,7 +445,7 @@ const UserProfile = ({ id, user }) => {
                     </Link>
                   </div>
                   <p className="text-gray-500 mb-2 font-bold text-sm">
-                    <i>{formatPostDate(post.date)}</i>
+                    <i>{formatDate(post.date)}</i>
                   </p>
                 </div>
                 <div className="flex wrap">
@@ -552,7 +529,10 @@ const UserProfile = ({ id, user }) => {
                                   className="flex"
                                 >
                                   <Image
-                                    src="/profile-picture.png"
+                                    src={
+                                      comment?.authorImage ||
+                                      defaultProfilePicture
+                                    }
                                     alt="User Avatar"
                                     className="w-6 h-6 rounded-full mr-2"
                                     width={50}
@@ -564,7 +544,7 @@ const UserProfile = ({ id, user }) => {
                                 </Link>
                               </div>
                               <p className="text-gray-500 font-bold">
-                                <i>{formatCommentDate(comment.date)}</i>
+                                <i>{formatDate(comment.date)}</i>
                               </p>
                             </div>
                             <div className="flex items-center wrap">

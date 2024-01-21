@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, push, child, set, get } from "firebase/database";
+import { getStorage } from "firebase/storage";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4PPLmCW6jFMU-Bdw_EdvYtIifqa8XbYI",
@@ -14,6 +16,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+
+export const storage = getStorage(app);
 export const db = getDatabase(app);
 
 export async function signUp({ fullName, email, password, address, bio }) {
@@ -149,7 +153,7 @@ export async function getFollowStatus(followerId, followingId) {
   return followings.includes(followingId);
 }
 
-export async function post({ content, date, author, likes, authorName }) {
+export async function post({ content, date, author, likes, authorName, authorImage}) {
   const newKey = push(ref(db, "/posts")).key;
   await set(ref(db, "/posts/" + newKey), {
     content,
@@ -157,6 +161,7 @@ export async function post({ content, date, author, likes, authorName }) {
     author,
     likes: [],
     authorName,
+    authorImage: await getProfileInfo(author).then((res) => res.profileImage) || null,
   });
 
   const snapshot = await get(ref(db, "/users/" + author + "/posts"));
@@ -175,16 +180,23 @@ export async function getPosts() {
 
   if (postsObject) {
     // Convert the posts object to an array
-    const postsArray = Object.keys(postsObject).map((key) => ({
-      key,
-      ...postsObject[key],
-    }));
+    const postsArray = await Promise.all(
+      Object.keys(postsObject).map(async (key) => {
+        const post = { key, ...postsObject[key] };
+        // Fetch the author's image and add it to the post object
+        post.authorImage = await getProfileInfo(post.author).then(
+          (res) => res.profileImage || null
+        );
+        return post;
+      })
+    );
     // Reverse the array to display the latest posts first
     return postsArray.reverse();
   } else {
     return [];
   }
 }
+
 
 export async function likePost(postId, likedUsers) {
   try {
@@ -209,6 +221,7 @@ export async function comment({ content, date, postid, author }) {
     postid,
     author,
     authorName,
+    authorImage: await getProfileInfo(author).then((res) => res.profileImage) || null,
   });
 
   const postCommentsRef = ref(db, "/posts/" + postid + "/comments");
@@ -222,7 +235,6 @@ export async function comment({ content, date, postid, author }) {
     await set(postCommentsRef, comments);
   }
 }
-
 export async function getComments(postId, limit = -1) {
   const postCommentsRef = ref(db, `/posts/${postId}/comments`);
   const snapshot = await get(postCommentsRef);
@@ -245,7 +257,12 @@ export async function getComments(postId, limit = -1) {
     const commentSnapshot = await get(ref(db, `/comments/${commentKey}`));
 
     if (commentSnapshot.exists()) {
-      comments.push(commentSnapshot.val());
+      const comment = commentSnapshot.val();
+      // Fetch the author's image and add it to the comment object
+      comment.authorImage = await getProfileInfo(comment.author).then(
+        (res) => res.profileImage || null
+      );
+      comments.push(comment);
     }
   }
 
@@ -255,6 +272,7 @@ export async function getComments(postId, limit = -1) {
 
   return comments;
 }
+
 
 export async function getPostsByUser(userId) {
   const allPosts = await getPosts();

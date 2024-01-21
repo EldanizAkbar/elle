@@ -10,6 +10,15 @@ import Header from "@/components/header";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+import { storage } from "../lib/firebase/index";
+import { getDatabase, ref as databaseRef, set } from "firebase/database";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+const db = getDatabase();
 
 const defaultProfilePicture = "/profile-picture.png";
 const defaultUserImage = "/profile-picture.png";
@@ -25,9 +34,12 @@ const Profile = () => {
   const [commentingPostIndex, setCommentingPostIndex] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [currentUserID, setCurrentUserID] = useState("");
+  const [image, setImage] = useState(null);
+  const [url, setUrl] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
 
   useEffect(() => {
-    const fetchProfileInfo = async () => {
+    const fetchData = async () => {
       try {
         const userId = localStorage.getItem("user");
         const info = await getProfileInfo(userId);
@@ -35,57 +47,38 @@ const Profile = () => {
         setUserPosts(await getPostsByUser(userId));
         setCurrentUserID(userId);
         setLikedPosts(info.likes || []);
+
+        const imageRef = storageRef(storage, `images/${userId}`);
+        const imageUrl = await getDownloadURL(imageRef);
+
+        setProfileInfo((prevInfo) => ({ ...prevInfo, profileImage: imageUrl }));
+
+        if (showFollowers) {
+          const followersPromises = info.followers.map(async (follower) => {
+            const followerInfo = await getProfileInfo(follower);
+            return followerInfo;
+          });
+
+          const followersNames = await Promise.all(followersPromises);
+          setFollowerNames(followersNames);
+        }
+
+        if (showFollowings) {
+          const followingsPromises = info.followings.map(async (following) => {
+            const followingInfo = await getProfileInfo(following);
+            return followingInfo;
+          });
+
+          const followingsNames = await Promise.all(followingsPromises);
+          setFollowingNames(followingsNames);
+        }
       } catch (error) {
         console.error("Error fetching profile info:", error.message);
       }
     };
 
-    fetchProfileInfo();
-  }, []);
-
-  useEffect(() => {
-    const fetchFollowersInfo = async () => {
-      try {
-        const followersPromises = profileInfo.followers.map(
-          async (follower) => {
-            const followerInfo = await getProfileInfo(follower);
-            return followerInfo;
-          }
-        );
-
-        const followersNames = await Promise.all(followersPromises);
-        setFollowerNames(followersNames);
-      } catch (error) {
-        console.error("Error fetching followers info:", error.message);
-      }
-    };
-
-    if (showFollowers) {
-      fetchFollowersInfo();
-    }
-  }, [showFollowers, profileInfo]);
-
-  useEffect(() => {
-    const fetchFollowingsInfo = async () => {
-      try {
-        const followingsPromises = profileInfo.followings.map(
-          async (following) => {
-            const followingInfo = await getProfileInfo(following);
-            return followingInfo;
-          }
-        );
-
-        const followingsNames = await Promise.all(followingsPromises);
-        setFollowingNames(followingsNames);
-      } catch (error) {
-        console.error("Error fetching followings info:", error.message);
-      }
-    };
-
-    if (showFollowings) {
-      fetchFollowingsInfo();
-    }
-  }, [showFollowings, profileInfo]);
+    fetchData();
+  }, [showFollowers, showFollowings]);
 
   const handleShowFollowers = () => {
     setShowFollowers(!showFollowers);
@@ -97,61 +90,38 @@ const Profile = () => {
     setShowFollowing(!showFollowings);
   };
 
-  const formatPostDate = (postDate) => {
+  const formatDate = (date) => {
     const currentDate = new Date();
-    const postDateObj = new Date(postDate);
+    const dateObj = new Date(date);
 
-    const timeDiff = currentDate - postDateObj;
+    const timeDiff = currentDate - dateObj;
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
     if (days === 0) {
-      return postDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      });
+      const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+      if (hoursDiff < 12) {
+        return dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+        });
+      } else {
+        return `Yesterday at ${dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+        })}`;
+      }
     } else if (days === 1) {
-      return `Yesterday at ${postDateObj.toLocaleTimeString("en-US", {
+      return `Yesterday at ${dateObj.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "numeric",
       })}`;
     } else if (days < 365) {
-      return postDateObj.toLocaleDateString("en-US", {
+      return dateObj.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       });
     } else {
-      return postDateObj.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    }
-  };
-
-  const formatCommentDate = (commentDate) => {
-    const currentDate = new Date();
-    const commentDateObj = new Date(commentDate);
-
-    const timeDiff = currentDate - commentDateObj;
-    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return commentDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      });
-    } else if (days === 1) {
-      return `Yesterday at ${commentDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      })}`;
-    } else if (days < 365) {
-      return commentDateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-    } else {
-      return commentDateObj.toLocaleDateString("en-US", {
+      return dateObj.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -247,21 +217,109 @@ const Profile = () => {
     );
   }
 
+  const handleImageChange = (e) => {
+    setUploadError("Now you can upload the image.");
+    if (e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = () => {
+    setUploadError(null);
+    if (!image) {
+      setUploadError("Please choose an image before uploading.");
+      return;
+    }
+
+    const imageRef = storageRef(storage, "images/" + currentUserID);
+    uploadBytes(imageRef, image)
+      .then(() => {
+        getDownloadURL(imageRef)
+          .then((url) => {
+            // Update the profileInfo state with the new URL
+            setProfileInfo((prevInfo) => ({ ...prevInfo, profileImage: url }));
+            set(
+              databaseRef(db, "/users/" + currentUserID + "/profileImage"),
+              url
+            );
+          })
+          .catch((error) => {
+            console.log(error.message, "error getting the image URL");
+          });
+
+        setImage(null);
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+  };
+
+  const handleRemove = async () => {
+    try {
+      // Check if the profile image exists before attempting to remove it
+      if (
+        !profileInfo.profileImage ||
+        profileInfo.profileImage === defaultProfilePicture
+      ) {
+        console.warn("No profile image to remove.");
+        return;
+      }
+
+      // Remove the image from storage
+      const imageRef = storageRef(storage, `images/${currentUserID}`);
+      await deleteObject(imageRef);
+
+      // Remove the image URL from the database
+      await set(databaseRef(db, `/users/${currentUserID}/profileImage`), null);
+
+      // Update the profileInfo state with the default profile picture
+      setProfileInfo((prevInfo) => ({
+        ...prevInfo,
+        profileImage: defaultProfilePicture,
+      }));
+    } catch (error) {
+      console.error("Error removing profile picture:", error.message);
+    }
+  };
+
   return (
     <>
       <Head>
         <title>My Profile</title>
       </Head>
       <Header />
-      <div className="container mx-auto mt-8 py-6 px-4 bg-white rounded-lg shadow-lg profile_container">
+      <div className="container mx-auto mt-8 py-10 pb-20 px-4 bg-white rounded-lg shadow-lg profile_container">
         <div className="text-center">
           <Image
-            src={profileInfo.profilePicture || defaultProfilePicture}
+            src={profileInfo.profileImage || defaultProfilePicture}
             alt="Profile"
             className="w-24 h-24 rounded-full mx-auto mb-4"
             width={100}
             height={100}
           />
+          <div className="flex flex-col items-center">
+            <input
+              type="file"
+              accept="image/x-png,image/gif,image/jpeg"
+              onChange={handleImageChange}
+              className="custom-file-input"
+            />
+            {uploadError && (
+              <p className="text-red-500 text-center mt-3">
+                <i>{uploadError}</i>
+              </p>
+            )}
+            <button onClick={handleSubmit} className="imgUpload_btn mt-5 mb-3">
+              Upload
+            </button>
+            {profileInfo.profileImage &&
+              profileInfo.profileImage !== defaultProfilePicture && (
+                <button onClick={handleRemove} className="removeImage_btn mb-8">
+                  Remove Image
+                </button>
+              )}
+          </div>
+
           <h1 className="text-2xl font-bold">{profileInfo.fullName}</h1>
         </div>
 
@@ -328,6 +386,7 @@ const Profile = () => {
                           width={50}
                           height={50}
                         />
+
                         <div className="flex flex-col gap-2">
                           <p className="text-lg font-bold">{user.fullName}</p>
                           <Link
@@ -403,7 +462,7 @@ const Profile = () => {
                   <div className="flex items-center mb-2">
                     <Link href={`/${post.author}`}>
                       <Image
-                        src="/profile-picture.png"
+                        src={profileInfo.profileImage || defaultUserImage}
                         alt="User Avatar"
                         className="w-8 h-8 rounded-full mr-2"
                         width={50}
@@ -417,7 +476,7 @@ const Profile = () => {
                     </Link>
                   </div>
                   <p className="text-gray-500 mb-2 font-bold text-sm">
-                    <i>{formatPostDate(post.date)}</i>
+                    <i>{formatDate(post.date)}</i>
                   </p>
                 </div>
                 <div className="flex wrap">
@@ -501,7 +560,9 @@ const Profile = () => {
                                   className="flex"
                                 >
                                   <Image
-                                    src="/profile-picture.png"
+                                    src={
+                                      comment?.authorImage || defaultUserImage
+                                    }
                                     alt="User Avatar"
                                     className="w-6 h-6 rounded-full mr-2"
                                     width={50}
@@ -513,7 +574,7 @@ const Profile = () => {
                                 </Link>
                               </div>
                               <p className="text-gray-500 font-bold">
-                                <i>{formatCommentDate(comment.date)}</i>
+                                <i>{formatDate(comment.date)}</i>
                               </p>
                             </div>
                             <div className="flex items-center wrap">

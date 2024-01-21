@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Header from "@/components/header";
-import { useRouter } from "next/router";
 import {
   getPosts,
   post,
@@ -14,73 +13,59 @@ import Head from "next/head";
 import Image from "next/image";
 
 const Home = ({ initialPosts }) => {
-  const router = useRouter();
   const [posts, setPosts] = useState(initialPosts || []);
   const [newPostContent, setNewPostContent] = useState("");
   const [likedPosts, setLikedPosts] = useState([]);
   const [currentUserID, setCurrentUserID] = useState("");
   const [commentingPostIndex, setCommentingPostIndex] = useState(null);
   const [commentText, setCommentText] = useState("");
+  const [postError, setPostError] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [infos, setInfos] = useState({});
 
   useEffect(() => {
     setCurrentUserID(localStorage.getItem("user"));
+    handLeimg();
   }, []);
 
-  const formatPostDate = (postDate) => {
-    const currentDate = new Date();
-    const postDateObj = new Date(postDate);
-
-    const timeDiff = currentDate - postDateObj;
-    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return postDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      });
-    } else if (days === 1) {
-      return `Yesterday at ${postDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      })}`;
-    } else if (days < 365) {
-      return postDateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-    } else {
-      return postDateObj.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    }
+  const handLeimg = async () => {
+    const currentUserID = localStorage.getItem("user");
+    let infos = await getProfileInfo(currentUserID);
+    setInfos(infos);
   };
 
-  const formatCommentDate = (commentDate) => {
+  const formatDate = (date) => {
     const currentDate = new Date();
-    const commentDateObj = new Date(commentDate);
+    const dateObj = new Date(date);
 
-    const timeDiff = currentDate - commentDateObj;
+    const timeDiff = currentDate - dateObj;
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
     if (days === 0) {
-      return commentDateObj.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-      });
+      const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+      if (hoursDiff < 12) {
+        return dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+        });
+      } else {
+        return `Yesterday at ${dateObj.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+        })}`;
+      }
     } else if (days === 1) {
-      return `Yesterday at ${commentDateObj.toLocaleTimeString("en-US", {
+      return `Yesterday at ${dateObj.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "numeric",
       })}`;
     } else if (days < 365) {
-      return commentDateObj.toLocaleDateString("en-US", {
+      return dateObj.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       });
     } else {
-      return commentDateObj.toLocaleDateString("en-US", {
+      return dateObj.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -97,6 +82,17 @@ const Home = ({ initialPosts }) => {
 
     const name = await getProfileInfo(currentUserID);
 
+    if (newPostContent.trim() === "") {
+      setPostError("Post content cannot be empty");
+      return;
+    }
+
+    if (newPostContent.length > 100) {
+      setPostError("Post content should be at most 100 characters");
+      return;
+    }
+    setPostError("");
+
     if (newPostContent.trim() !== "") {
       const currentDate = new Date().toString();
       const newPost = {
@@ -105,6 +101,7 @@ const Home = ({ initialPosts }) => {
         author: currentUserID,
         likes: [],
         authorName: name.fullName,
+        authorImage: name?.profileImage,
       };
 
       await post(newPost);
@@ -168,7 +165,18 @@ const Home = ({ initialPosts }) => {
   const handleSendComment = async (postIndex) => {
     const currentUserID = localStorage.getItem("user");
     const postId = posts[postIndex].key;
-    console.log(postId);
+
+    if (commentText.trim() === "") {
+      setCommentError("Comment content cannot be empty");
+      return;
+    }
+
+    if (commentText.length > 100) {
+      setCommentError("Comment content should be at most 100 characters");
+      return;
+    }
+
+    setCommentError("");
 
     await comment({
       content: commentText,
@@ -208,7 +216,7 @@ const Home = ({ initialPosts }) => {
             <div className="mb-4 mt-8">
               <div className="flex">
                 <Image
-                  src="/profile-picture.png"
+                  src={infos.profileImage || "/profile-picture.png"}
                   alt="User Avatar"
                   className="w-8 h-8 rounded-full mr-2"
                   width={50}
@@ -220,8 +228,14 @@ const Home = ({ initialPosts }) => {
                     placeholder="What's on your mind?"
                     value={newPostContent}
                     onChange={(e) => setNewPostContent(e.target.value)}
-                    className="w-full h-20 border p-2 rounded"
+                    className="w-full h-20 border p-2 rounded max-h-60 min-h-1"
                   />
+
+                  {postError && (
+                    <p className="text-red-500 font-bold text-sm">
+                      <i>{postError}</i>
+                    </p>
+                  )}
 
                   <button
                     onClick={handlePost}
@@ -242,7 +256,7 @@ const Home = ({ initialPosts }) => {
                     <div className="flex items-center mb-2">
                       <Link href={`/${post.author}`}>
                         <Image
-                          src="/profile-picture.png"
+                          src={post?.authorImage || "/profile-picture.png"}
                           alt="User Avatar"
                           className="w-8 h-8 rounded-full mr-2"
                           width={50}
@@ -256,7 +270,7 @@ const Home = ({ initialPosts }) => {
                       </Link>
                     </div>
                     <p className="text-gray-500 mb-2 font-bold text-sm">
-                      <i>{formatPostDate(post.date)}</i>
+                      <i>{formatDate(post.date)}</i>
                     </p>
                   </div>
                   <div className="flex wrap">
@@ -309,8 +323,13 @@ const Home = ({ initialPosts }) => {
                         placeholder="Write a comment..."
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
-                        className="w-full h-12 border p-2 rounded"
+                        className="w-full h-12 border p-2 rounded max-h-60 min-h-10"
                       />
+                      {commentError && (
+                        <p className="text-red-500 text-red-500 font-bold text-sm">
+                          <i>{commentError}</i>
+                        </p>
+                      )}
                       <div className="flex mt-2">
                         <button
                           onClick={() => handleSendComment(index)}
@@ -340,7 +359,10 @@ const Home = ({ initialPosts }) => {
                                     className="flex"
                                   >
                                     <Image
-                                      src="/profile-picture.png"
+                                      src={
+                                        comment?.authorImage ||
+                                        "/profile-picture.png"
+                                      }
                                       alt="User Avatar"
                                       className="w-6 h-6 rounded-full mr-2"
                                       width={50}
@@ -353,7 +375,7 @@ const Home = ({ initialPosts }) => {
                                   </Link>
                                 </div>
                                 <p className="text-gray-500 font-bold">
-                                  <i>{formatCommentDate(comment.date)}</i>
+                                  <i>{formatDate(comment.date)}</i>
                                 </p>
                               </div>
                               <div className="flex items-center wrap">

@@ -18,9 +18,6 @@ export default function Login() {
       const password = passwordRef.current.value;
 
       await login({ email, password });
-
-      // Redirect to the home page or any other desired page after successful login
-      window.location.href = "/";
     } catch (error) {
       console.error("Login Error:", error.message);
 

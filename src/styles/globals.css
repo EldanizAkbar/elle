@@ -355,3 +355,64 @@ nav {
     max-width: 1000px;
     border-radius: 20px;
 }
+
+.custom-file-input{
+    max-width: 145px;
+}
+.custom-file-input::-webkit-file-upload-button {
+    visibility: hidden;
+  }
+
+  .custom-file-input::before {
+    content: 'Select profile picture';
+    display: inline-block;
+    background: linear-gradient(top, #f9f9f9, #e3e3e3);
+    border: 1px solid #999;
+    border-radius: 3px;
+    padding: 5px 8px;
+    outline: none;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+    text-shadow: 1px 1px #fff;
+    font-weight: 700;
+    font-size: 13px !important;
+    transition: all 0.5s ease !important;
+  }
+  .custom-file-input:hover::before {
+    border-color: black;
+  }
+  .custom-file-input:active::before {
+    background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+  }
+
+  .imgUpload_btn{
+    border: 2px solid #41658a !important;
+    color: #41658a !important;
+    border-radius: 20px !important;
+    padding: 5px 15px !important;
+    transition: all 0.5s ease !important;
+    background-color: none !important;
+  }
+
+    .imgUpload_btn:hover{
+        background-color: #41658a !important;
+        color: white !important;
+    }
+
+
+
+.removeImage_btn{
+    border: 1px solid #9d0208;
+    color: #9d0208;
+    border-radius: 20px;
+    padding: 5px 15px;
+    transition: all 0.5s ease;
+    background-color: none; 
+}  
+
+.removeImage_btn:hover{
+    background-color: #9d0208;
+    color: white;
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "../components/header";
-import { searchUsers, getProfileInfo } from "../lib/firebase/index";
+import { searchUsers } from "../lib/firebase/index";
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
@@ -10,9 +10,9 @@ const Search = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [currentUserId, setCurrentUserId] = useState("");
   const [noResults, setNoResults] = useState(false);
+  const defaultUserImage = "/profile-picture.png";
 
   useEffect(() => {
-    // Retrieve the current user's ID from local storage
     const userId = localStorage.getItem("user");
     setCurrentUserId(userId);
   }, []);
@@ -20,8 +20,6 @@ const Search = () => {
   const handleSearch = async () => {
     try {
       const results = await searchUsers(query);
-
-      // Exclude the current user from the search results
       const filteredResults = results.filter(
         (user) => user.id !== currentUserId
       );
@@ -38,8 +36,6 @@ const Search = () => {
       handleSearch();
     }
   };
-
-  const defaultUserImage = "/profile-picture.png";
 
   return (
     <>

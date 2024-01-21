@@ -3,6 +3,7 @@ import { signUp } from "../lib/firebase/index";
 import Header from "../components/header";
 import Head from "next/head";
 import Link from "next/link";
+import {useRouter} from "next/router";
 
 export default function Register() {
   const fullNameRef = useRef(null);
@@ -11,6 +12,7 @@ export default function Register() {
   const repeatPasswordRef = useRef(null);
   const addressRef = useRef(null);
   const bioRef = useRef(null);
+  const router = useRouter();
 
   const [errors, setErrors] = useState({
     fullName: "",
@@ -114,8 +116,7 @@ export default function Register() {
         addressRef.current.value = "";
         bioRef.current.value = "";
 
-        alert("Registration successful!");
-        return (window.location.href = "./");
+        router.push("/");
       }
     } catch (error) {
       console.error("Registration Error:", error.message);
@@ -134,7 +135,7 @@ export default function Register() {
         <title>Register</title>
       </Head>
       <Header />
-      <div className="p-2 flex items-center justify-center mt-10">
+      <div className="p-2 flex items-center justify-center mt-10 mb-20">
         <div className="container max-w-screen-lg mx-auto bg-white p-6">
           <div>
             <h2 className="font-semibold text-xl text-gray-600">
@@ -227,12 +228,12 @@ export default function Register() {
                   )}
                 </div>
                 <div className="md:col-span-4 mb-5">
-                  <label htmlFor="zipcode">BIO</label>
+                  <label htmlFor="bio">BIO</label>
                   <textarea
                     type="text"
-                    name="zipcode"
-                    id="zipcode"
-                    className={`transition-all flex items-center h-10 border mt-1 rounded px-4 py-2 w-full bg-gray-50 min-h-28 ${
+                    name="bio"
+                    id="bio"
+                    className={`transition-all flex items-center h-10 border mt-1 rounded px-4 py-2 w-full bg-gray-50 min-h-28 max-h-52 ${
                       errors.bio ? "border-red-500" : ""
                     }`}
                     placeholder="I am a software developer."

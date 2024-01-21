@@ -12,7 +12,8 @@ function App({ Component, pageProps }) {
     if (
       !isLogin &&
       router.pathname !== "/login" &&
-      router.pathname !== "/register"
+      router.pathname !== "/register" &&
+      router.pathname !== "/"
     ) {
       router.push("/login");
     }

@@ -29,7 +29,7 @@ const Header = () => {
     }
 
     setAuthenticated(false);
-    window.location.href = "/";
+    router.push("/");
   };
 
   const toggleMobileMenu = () => {
@@ -41,7 +41,7 @@ const Header = () => {
       <nav className="bg-gray-800 p-4 rounded-3xl mt-5 mx-auto">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex-shrink-0">
-          <Link href="/">
+            <Link href="/">
               <div className="flex items-center cursor-pointer">
                 <Image
                   className="h-8 w-auto logo"
@@ -137,14 +137,14 @@ const Header = () => {
             {authenticated ? (
               <>
                 <div className="flex flex-col mt-10">
-                <Link
-                  href="/"
-                  className={`text-center transition duration-300 home w-40 mx-auto ${
-                    router.pathname === "/" ? "homeBg" : ""
-                  }`}
-                >
-                  Home
-                </Link>
+                  <Link
+                    href="/"
+                    className={`text-center transition duration-300 home w-40 mx-auto ${
+                      router.pathname === "/" ? "homeBg" : ""
+                    }`}
+                  >
+                    Home
+                  </Link>
 
                   <Link
                     href="/profile"
