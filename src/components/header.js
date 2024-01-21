@@ -29,7 +29,15 @@ const Header = () => {
     }
 
     setAuthenticated(false);
-    router.push("/");
+
+    if(router.pathname === "/") {
+      router.reload('/');
+    }
+    else{
+      router.push("/");
+    }
+
+   
   };
 
   const toggleMobileMenu = () => {
