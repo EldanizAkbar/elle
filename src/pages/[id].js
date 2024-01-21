@@ -274,7 +274,7 @@ const UserProfile = ({ id, user }) => {
           <Image
             src={user?.profileImage || defaultProfilePicture}
             alt={`${user.fullName}'s Profile`}
-            className="w-24 h-24 rounded-full mx-auto mb-4"
+            className="w-24 h-24 rounded-full mx-auto mb-4  object-cover"
             width={100}
             height={100}
           />
@@ -433,7 +433,7 @@ const UserProfile = ({ id, user }) => {
                       <Image
                         src={post?.authorImage || defaultProfilePicture}
                         alt="User Avatar"
-                        className="w-8 h-8 rounded-full mr-2"
+                        className="w-8 h-8 rounded-full mr-2 object-cover"
                         width={50}
                         height={50}
                       />

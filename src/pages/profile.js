@@ -293,7 +293,7 @@ const Profile = () => {
           <Image
             src={profileInfo.profileImage || defaultProfilePicture}
             alt="Profile"
-            className="w-24 h-24 rounded-full mx-auto mb-4"
+            className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
             width={100}
             height={100}
           />
@@ -464,7 +464,7 @@ const Profile = () => {
                       <Image
                         src={profileInfo.profileImage || defaultUserImage}
                         alt="User Avatar"
-                        className="w-8 h-8 rounded-full mr-2"
+                        className="w-8 h-8 rounded-full mr-2 object-cover"
                         width={50}
                         height={50}
                       />
@@ -564,7 +564,7 @@ const Profile = () => {
                                       comment?.authorImage || defaultUserImage
                                     }
                                     alt="User Avatar"
-                                    className="w-6 h-6 rounded-full mr-2"
+                                    className="w-6 h-6 rounded-full mr-2 object-cover"
                                     width={50}
                                     height={50}
                                   />

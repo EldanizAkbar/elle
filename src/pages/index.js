@@ -218,7 +218,7 @@ const Home = ({ initialPosts }) => {
                 <Image
                   src={infos.profileImage || "/profile-picture.png"}
                   alt="User Avatar"
-                  className="w-8 h-8 rounded-full mr-2"
+                  className="w-8 h-8 rounded-full mr-2 object-cover"
                   width={50}
                   height={50}
                 />
@@ -258,7 +258,7 @@ const Home = ({ initialPosts }) => {
                         <Image
                           src={post?.authorImage || "/profile-picture.png"}
                           alt="User Avatar"
-                          className="w-8 h-8 rounded-full mr-2"
+                          className="w-8 h-8 rounded-full mr-2  object-cover"
                           width={50}
                           height={50}
                         />
@@ -364,7 +364,7 @@ const Home = ({ initialPosts }) => {
                                         "/profile-picture.png"
                                       }
                                       alt="User Avatar"
-                                      className="w-6 h-6 rounded-full mr-2"
+                                      className="w-6 h-6 rounded-full mr-2 object-cover"
                                       width={50}
                                       height={50}
                                     />
